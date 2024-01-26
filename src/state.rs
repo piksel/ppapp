@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::collections::hash_map::Entry;
 use serde::Serialize;
 use socketioxide::socket::Sid;
@@ -8,17 +8,29 @@ use uuid::Uuid;
 
 pub mod message;
 pub mod user;
+pub mod room;
+pub mod round;
+pub mod vote;
 
 pub use message::Message;
 pub use user::User;
+pub use room::Room;
+pub use round::Round;
+pub use vote::Vote;
 
 pub type MessagesStore = HashMap<String, Vec<Message>>;
-pub type MembersStore = HashMap<String, Vec<Uuid>>;
+pub type MembersStore = HashMap<String, BTreeSet<String>>;
+pub type RoomsStore = HashMap<String, Room>;
+pub type RoundsStore = HashMap<String, Vec<Round>>;
+pub type VotesStore = HashMap<String, HashMap<String, Vote>>;
 
 #[derive(Default)]
 pub struct RoomState {
+    pub rooms: RwLock<RoomsStore>,
     pub messages: RwLock<MessagesStore>,
     pub members: RwLock<MembersStore>,
+    pub rounds: RwLock<RoundsStore>,
+    pub votes: RwLock<VotesStore>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -26,16 +38,15 @@ pub struct Session {
     #[serde(rename = "sessionID")]
     pub session_id: Uuid,
     #[serde(rename = "userID")]
-    pub user_id: Uuid,
-    pub username: String,
+    pub user_id: String,
     pub connected: bool,
 }
+
 impl Session {
     pub fn new(user: &User) -> Self {
         Self {
             session_id: Uuid::new_v4(),
-            user_id: user.user_id,
-            username: user.username.clone(),
+            user_id: user.user_id.clone(),
             connected: true,
         }
     }
@@ -43,8 +54,9 @@ impl Session {
 
 #[derive(Default)]
 pub struct Sessions(pub RwLock<HashMap<Uuid, Session>>);
+
 #[derive(Default)]
-pub struct Users(pub RwLock<HashMap<Uuid, User>>);
+pub struct Users(pub RwLock<HashMap<String, User>>);
 
 impl RoomState {
     pub async fn insert_message(&self, room: &str, message: Message) {
@@ -54,12 +66,21 @@ impl RoomState {
         // messages.truncate(20);
     }
 
-    pub async fn get_messages(&self, room: &str) -> Vec<Message> {
-        let messages = self.messages.read().unwrap().get(room).cloned();
-        messages.unwrap_or_default().into_iter().rev().collect()
+    pub async fn get_rounds(&self, room: &str) -> Vec<Round> {
+        let rounds = self.rounds.read().unwrap().get(room).cloned();
+        rounds.unwrap_or_default().into_iter().collect()
     }
 
-    pub async fn get_members(&self, room: &str) -> Vec<Uuid> {
+    pub async fn get_votes(&self, room: &str) -> Vec<Vote> {
+        let votes = self.votes.read().unwrap().get(room).cloned();
+        votes.unwrap_or_default().values().cloned().collect()
+    }
+
+    pub async fn get_room_info(&self, room_id: &str) -> Room {
+        self.rooms.read().unwrap().get(room_id).unwrap().clone()
+    }
+
+    pub async fn get_members(&self, room: &str) -> Vec<String> {
         let members = self.members.read().unwrap().get(room).cloned();
         members.unwrap_or_default().into_iter().rev().collect()
     }

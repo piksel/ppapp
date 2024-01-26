@@ -9,6 +9,19 @@ export namespace types {
     };
     export type UserDTO = {
         "userID": string;
-        "username": string;
+        "name": string;
+        "email": string;
+    };
+    export type RoomDTO = {
+        "roomID": string;
+        "name": string;
+    };
+    export type VoteDTO = {
+        "userID": string;
+        "score": string;
+    };
+    export type RoundDTO = {
+        "name": string;
+        "votes": (types.VoteDTO)[];
     };
 }

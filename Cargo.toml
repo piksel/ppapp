@@ -22,6 +22,9 @@ semver = "1.0.21"
 lazy_static = "1.4.0"
 uuid = { version = "1.7.0", features = ["serde", "v4"] }
 typescript-type-def = { version = "0.5.9" }
+base64 = { version = "0.21.7" }
+rand = "0.8.5"
+anyhow = "1.0.79"
 
 [build-dependencies]
 typescript-type-def = { version = "*", features = ["json_value", "serde_json"] }
@@ -29,3 +32,4 @@ uuid = { version = "*", features = ["serde", "v4"] }
 serde = { version = "*", features = ["derive"] }
 chrono = { version = "*", features = ["serde"] }
 serde_json = "*"
+base64 = "*"

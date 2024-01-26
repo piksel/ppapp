@@ -2,6 +2,8 @@ mod state;
 mod meta;
 mod event;
 mod handlers;
+mod pokemon;
+pub mod id;
 
 use axum::routing::get;
 use axum::extract::State as AxState;

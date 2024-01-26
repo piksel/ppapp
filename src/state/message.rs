@@ -1,3 +1,5 @@
+use base64::Engine;
+use base64::prelude::BASE64_URL_SAFE_NO_PAD;
 use chrono::{DateTime, Utc};
 use typescript_type_def::{TypeDef};
 use uuid::Uuid;
@@ -5,7 +7,7 @@ use uuid::Uuid;
 #[derive(Clone, Debug)]
 pub struct Message {
     pub content: String,
-    pub from: Uuid,
+    pub from: String,
     pub date: DateTime<Utc>,
 }
 
@@ -21,7 +23,7 @@ impl Message {
         MessageDTO {
             content: self.content,
             date: self.date.to_string(),
-            from: self.from.as_simple().to_string()
+            from: BASE64_URL_SAFE_NO_PAD.encode(self.from.as_bytes()),
         }
     }
 
@@ -29,7 +31,7 @@ impl Message {
         MessageDTO {
             content: self.content.clone(),
             date: self.date.to_string(),
-            from: self.from.as_simple().to_string()
+            from: BASE64_URL_SAFE_NO_PAD.encode(self.from.as_bytes()),
         }
     }
 }

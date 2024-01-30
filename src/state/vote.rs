@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter, Octal};
 use std::num::ParseIntError;
 use std::str::FromStr;
-use typescript_type_def::TypeDef;
+use ts_rs::TS;
 
 #[derive(Clone, Debug)]
 pub enum Score {
@@ -41,7 +41,8 @@ pub struct Vote {
     pub score: Score,
 }
 
-#[derive(serde::Serialize, Clone, Debug, TypeDef)]
+#[derive(serde::Serialize, Clone, Debug, TS)]
+#[ts(export, export_to = "client/src/types/ppapi/")]
 pub struct VoteDTO {
     #[serde(rename = "userID")]
     pub user_id: String,

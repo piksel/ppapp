@@ -1,84 +1,20 @@
-mod state;
-mod meta;
-mod event;
-mod handlers;
-mod pokemon;
-pub mod id;
-
-use axum::routing::get;
+use self::meta::app_version;
 use axum::extract::State as AxState;
-use socketioxide::{
-    extract::{Data, SocketRef, State},
-    SocketIo,
-};
+use axum::routing::get;
+use socketioxide::SocketIo;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
-use tracing::field::DebugValue;
-use tracing::{info, debug, Level};
+use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
-use crate::event::{Event, Messages};
-use self::{meta::app_version};
 
-// async fn on_connect(socket: SocketRef) {
-//     info!(id = socket.id.to_string(), "Socket connected");
-//
-//     socket.on(
-//         Event::Join,
-//         |socket: SocketRef, Data::<String>(room), store: State<state::AppStore>| async move {
-//             info!(room, "Received join");
-//             let _ = socket.leave_all();
-//             let _ = socket.join(room.clone());
-//
-//             debug!(id = debug(socket.id), "Getting user...");
-//             store.get_user(&socket.id).await;
-//
-//             let users = store.get_users().await;
-//             debug!(count = users.len(), "Sending users...");
-//             let _ = socket.emit(Event::Users, event::Users { users });
-//
-//             let messages = store.get_messages(&room).await;
-//             debug!(count = messages.len(), "Sending messages...");
-//             let _ = socket.emit(Event::Messages, event::Messages { messages });
-//         },
-//     );
-//
-//     socket.on(
-//         Event::Message,
-//         |socket: SocketRef, Data::<event::MessageIn>(data), store: State<state::AppStore>| async move {
-//             info!(data = debug(&data), "Received message");
-//
-//             let response = state::Message {
-//                 text: data.text,
-//                 user: socket.id.to_string(),
-//                 date: chrono::Utc::now(),
-//             };
-//
-//             store.insert_message(&data.room, response.clone()).await;
-//
-//             let _ = socket.within(data.room).emit("message", response);
-//         },
-//     );
-//
-//     socket.on(
-//         Event::UpdateUser,
-//         |socket: SocketRef, Data::<event::UserIn>(data), store: State<state::AppStore>| async move {
-//             info!(data = debug(&data), "Received user update");
-//
-//             let user = state::User {
-//                 name: data.name,
-//             };
-//
-//             store.update_user(&socket.id, &user).await;
-//
-//             let _ = socket.within(data.room).emit(Event::UserUpdated, event::EntityUpdate {
-//                 id: socket.id.to_string(),
-//                 entity_type: "user",
-//                 update: user,
-//             });
-//         },
-//     )
-// }
+mod event;
+mod handlers;
+pub mod id;
+mod meta;
+mod pokemon;
+mod state;
+mod dto;
 
 async fn handler(AxState(io): AxState<SocketIo>) {
     info!("handler called");
@@ -87,10 +23,10 @@ async fn handler(AxState(io): AxState<SocketIo>) {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing::subscriber::set_global_default(FmtSubscriber::builder()
-        .with_max_level(Level::DEBUG)
-
-        .finish()
+    tracing::subscriber::set_global_default(
+        FmtSubscriber::builder()
+            .with_max_level(Level::DEBUG)
+            .finish(),
     )?;
 
     let (layer, io) = SocketIo::builder()

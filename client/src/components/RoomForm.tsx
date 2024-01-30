@@ -28,23 +28,26 @@ export const RoomForm: FC<Props> = (props) => {
 
   return (<>
     <h3 className="text-xl text-slate-300 text-left mt-5">Join or create a room</h3>
-    <div className="bg-ctp-crust p-4">
-      <input
-        className="flex-1 p-2 rounded-l-md bg-ctp-text text-ctp-base placeholder-ctp-subtext0"
-        placeholder="Room ID"
-        type="text" value={roomId} onChange={e => setRoomId(e.target.value)} />
-      <button
-        className="bg-ctp-blue px-6 font-bold text-ctp-base p-2 rounded-r-md"
-        onClickCapture={() => joinRoom(roomId)}>Join room</button>
-    </div>
-    <div className="bg-ctp-crust p-4">
-      <input
-        className="flex-1 p-2 rounded-l-md bg-ctp-text text-ctp-base placeholder-ctp-subtext0"
-        placeholder="Room name"
-        type="text" value={roomName} onChange={e => setRoomName(e.target.value)} />
-      <button
-        className="bg-ctp-blue px-6 font-bold text-ctp-base p-2 rounded-r-md"
-        onClickCapture={() => createRoom()}>Create new room</button>
+    <div className="flex items-center justify-between">
+      <div className="bg-ctp-crust p-4 flex-1">
+        <input
+          className="flex-1 p-2 rounded-l-md bg-ctp-text text-ctp-base placeholder-ctp-subtext0"
+          placeholder="Room ID"
+          type="text" value={roomId} onChange={e => setRoomId(e.target.value)} />
+        <button
+          className="bg-ctp-blue px-6 font-bold text-ctp-base p-2 rounded-r-md"
+          onClickCapture={() => joinRoom(roomId)}>Join room</button>
+      </div>
+      <div className="text-white text-2xl p-6">or</div>
+      <div className="bg-ctp-crust p-4 flex-1">
+        <input
+          className="flex-1 p-2 rounded-l-md bg-ctp-text text-ctp-base placeholder-ctp-subtext0"
+          placeholder="Room name"
+          type="text" value={roomName} onChange={e => setRoomName(e.target.value)} />
+        <button
+          className="bg-ctp-blue px-6 font-bold text-ctp-base p-2 rounded-r-md"
+          onClickCapture={() => createRoom()}>Create new room</button>
+      </div>
     </div>
   </>)
 }

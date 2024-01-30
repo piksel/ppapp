@@ -1,8 +1,7 @@
-use base64::Engine;
 use base64::prelude::BASE64_URL_SAFE_NO_PAD;
+use base64::Engine;
 use chrono::{DateTime, Utc};
-use typescript_type_def::{TypeDef};
-use uuid::Uuid;
+use ts_rs::TS;
 
 #[derive(Clone, Debug)]
 pub struct Message {
@@ -11,7 +10,8 @@ pub struct Message {
     pub date: DateTime<Utc>,
 }
 
-#[derive(serde::Serialize, Clone, Debug, TypeDef)]
+#[derive(serde::Serialize, Clone, Debug, TS)]
+#[ts(export, export_to = "client/src/types/ppapi/")]
 pub struct MessageDTO {
     pub content: String,
     pub from: String,

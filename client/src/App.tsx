@@ -5,78 +5,148 @@ import { useSocket } from './socket';
 import { Login } from './components/Login';
 import { RoomForm } from './components/RoomForm';
 import { UserForm } from './components/UserForm';
-import { Socket } from 'socket.io-client';
-import { FC } from 'react';
-import { Room, Round, User, Vote } from './types'
+import { FC, useState } from 'react';
+import { Result } from './types'
+import { ToastsContainer } from './components/ToastsContainer';
+import { UsersList } from './components/UsersList';
+import { RoundsList } from './components/RoundsList';
+import { Votes } from './components/Votes';
+import { VoteArea } from './components/VoteArea';
+import { Toast, ToastType } from './types/toasts';
 
 function App() {
+  const [showUserModal, setShowUserModal] = useState(false);
+  const { socket, userID, room, user, users, rounds, votes, vote, currentRound } = useSocket();
 
-  const { socket, userID, room, user, users, rounds, votes, vote } = useSocket();
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const addToast = (message: string, type: ToastType) => {
+    setToasts(curr => [...curr, { message, type, id: crypto.randomUUID() }])
+  }
+
+  const removeToast = (id: string) => {
+    setToasts(curr => curr.filter(t => t.id !== id));
+  }
+
+  const handleResult = (r: Result) => {
+    if (r.type === 'Error') {
+      addToast(r.error, 'error');
+    }
+  }
+
+  const editCurrentRound = () => { /* TODO */ };
+
 
   return (
     <>
-      {room ? <>
-        <div className='flex'>
+      <ToastsContainer toasts={toasts} removeToast={removeToast} />
+      {user ? <>
+        < div className='flex  justify-between gap-5' >
           <div className='flex-1'>
-            <h3 className="text-xl text-slate-300 text-left">Room</h3>
-            <h2 className='text-4xl text-left'>{room.name}</h2>
-          </div>
+            {room && (<>
+              <div className="text-lg bg-slate-800 px-4 py-2 text-slate-300 text-left rounded-t-md flex flex-row gap-3">
+                <div className="text-xl text-slate-300 text-left">Room</div>
 
-          <div className='flex-1'>
-            <h3 className="text-xl text-slate-300 text-left">User</h3>
-            <UserForm socket={socket} user={user} />
-          </div>
-        </div>
-
-        <div className='flex gap-5 mt-3'>
-
-          <div className='flex-auto'>
-            <h3 className="text-xl text-slate-300 text-left mt-5">Votes</h3>
-            <div className="bg-ctp-crust p-4 text-ctp-base flex gap-x-1 flex-row justify-between">
-
-              <div>
-                <Votes socket={socket} users={users} userId={userID} votes={votes} />
+                <button className='underline text-white text-opacity-50 text-sm' onClickCapture={() => { }}>Edit</button>
+              </div>
+              <div className='bg-ctp-crust rounded-b-md py-1 px-4 text-4xl text-white text-left'>
+                {room.name}
               </div>
 
+            </>)
 
-              <div>
+            }
+          </div>
 
-                <button
-                  className={`bg-slate-300 px-6 font-bold text-ctp-base p-2 rounded-md mt-5`}
-                  onClickCapture={() => socket.emit('new round', room.roomID)}>End round</button>
+          <div className='bg-ctp-crust p-3 w-64 flex justify-stretch rounded-md'>
+            <button className='flex flex-auto items-center gap-4 bg-slate-600 rounded-xl p-2' type='button' onClick={() => setShowUserModal(true)}>
+              <div className='rounded-xl h-12 w-12 bg-slate-200' style={{
+                background: `url(https://gravatar.com/avatar/${user.avatar}?d=identicon)`,
+                backgroundSize: 'cover'
+              }}></div>
+              <div className="text-xl text-slate-300 text-left">{user.name}</div>
+            </button>
+          </div>
+        </div >
+
+        {room ? <>
+          < div className='flex gap-5 mt-3' >
+
+
+
+            <div className='flex-auto'>
+              <div className="text-lg bg-slate-800 pl-4 pr-2 py-2 text-slate-300 text-left rounded-t-md">
+
+                <div className='flex justify-between items-center'>
+
+                  <h3 className=" text-slate-300 text-left">
+                    <span className='text-xl'>{currentRound?.name ?? ''}</span>
+                    <button className='underline text-white text-opacity-50 text-sm ml-2' onClickCapture={() => editCurrentRound()}>Edit</button>
+                  </h3>
+                  {currentRound?.flipped ? (
+                    <button
+                      className={`bg-slate-600 text-white px-6 py-1 rounded-md`}
+                      onClickCapture={() => socket.emit('new round', room.roomID, handleResult)}>New round</button>
+                  ) : (
+                    <button
+                      className={`bg-slate-600 text-white px-6 py-1 rounded-md`}
+                      onClickCapture={() => socket.emit('end vote', room.roomID, handleResult)}>Reveal cards</button>
+                  )}
+
+                </div>
               </div>
+
+              <div className="bg-ctp-crust p-2 text-ctp-base flex gap-1 flex-col justify-between  rounded-b-md">
+
+
+                <div className='p-4'>
+                  <Votes socket={socket} users={users} userId={userID} round={currentRound} votes={votes} />
+                </div>
+
+
+
+              </div>
+
+              <div className="text-lg bg-slate-800 pl-4 mt-3 pr-2 py-2 text-slate-300 text-left rounded-t-md">
+                Your vote
+              </div>
+              <div className='bg-ctp-crust p-4 text-ctp-base rounded-b-md'>
+
+                <VoteArea socket={socket} room={room} vote={vote} />
+              </div>
+
             </div>
 
-            <h3 className="text-xl text-slate-300 text-left mt-5">Your vote</h3>
-            <div className='bg-ctp-crust p-4 text-ctp-base'>
+            <div className='flex-1  min-w-64'>
+              <div className="text-lg bg-slate-800 px-4 py-2 text-slate-300 text-left rounded-t-md">Players</div>
+              <div className='bg-ctp-crust p-4 text-ctp-base rounded-b-md'>
 
-              <VoteArea socket={socket} room={room} vote={vote} />
+                <UsersList socket={socket} users={users} userId={userID} />
+              </div>
+
+              <div className="text-lg bg-slate-800 px-4 py-2 text-slate-300 text-left rounded-t-md mt-3">Rounds</div>
+              <div className='bg-ctp-crust p-4 text-ctp-base rounded-b-md'>
+
+                <RoundsList socket={socket} rounds={rounds} users={users} userId={userID} />
+              </div>
+
             </div>
+          </div >
+        </> : <RoomForm socket={socket} />
+        }
 
-          </div>
-
-          <div className='flex-1'>
-            <h3 className="text-xl text-slate-300 text-left">Users</h3>
-            <div className='bg-ctp-crust p-4 text-ctp-base'>
-
-              <UsersList socket={socket} users={users} userId={userID} />
+        {
+          showUserModal && <>
+            <div className='absolute top-0 left-0 right-0 bottom-0 backdrop-blur-sm bg-opacity-50 bg-black flex justify-center items-center'>
+              <dialog aria-modal='true' open={showUserModal} className='p-1 bg-slate-500 shadow-xl'>
+                <div className='bg-slate-500 text-white text-xl'>User options</div>
+                <UserForm socket={socket} user={user} onCloseDialog={() => setShowUserModal(false)} />
+              </dialog>
             </div>
+          </>
+        }
 
-            <h3 className="text-xl text-slate-300 text-left mt-5">Rounds</h3>
-            <div className='bg-ctp-crust p-4 text-ctp-base'>
-
-              <RoundsList socket={socket} rounds={rounds} users={users} userId={userID} />
-            </div>
-
-          </div>
-        </div>
-
-
-
-      </> : userID ? <div>
-        <pre>{JSON.stringify(userID, null, 4)}</pre>
-        <RoomForm socket={socket} />
-      </div> :
+      </> :
         (
           <Login socket={socket} />
         )
@@ -86,73 +156,11 @@ function App() {
   )
 }
 
-
-const UsersList: FC<{ socket: Socket, users: User[], userId: string | undefined }> = (props) => {
-  return (<ul>{props.users.map(u => <li key={u.userID} className='text-white text-left'>
-    <span>{u.name}</span>
-    {u.userID === props.userId ? ' (you)' : ''}
-  </li>
-  )}</ul>)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const Debug: FC<{ value: string | object | boolean | number | [] | undefined }> = ({ value }) => {
+  return <pre>{JSON.stringify(value, null, 4)}</pre>
 }
 
-const RoundsList: FC<{ socket: Socket, rounds: Round[], users: User[], userId: string | undefined }> = (props) => {
-  const { rounds, users, userId } = props;
-  return (<ul>
-
-    {rounds.map((r, i) => <li key={i} className='text-white text-left pl-4'>
-      <span>{r.name}</span>
-      {': '}<ul className='pl-4'>{r.votes.map(v => {
-        return <li key={v.userID}>
-          {users.find(u => u.userID === v.userID)?.name ?? v.userID}
-          {v.userID === userId ? ' (you)' : ''}
-          {': '}
-          {v.score}
-        </li>
-      })}</ul>
-    </li>
-    )}</ul>)
-}
-
-const Votes: FC<{ socket: Socket, users: User[], userId: string | undefined, votes: Vote[] }> = (props) => {
-
-
-
-  return (<ul>{props.users.map(u => {
-    const vote = props.votes.find(v => v.userID === u.userID);
-    return (<li key={u.userID} className='text-white text-left'>
-      <span>{u.name}</span>
-      {u.userID === props.userId ? ' (you)' : ''}
-      {': '}
-      {vote?.score ?? <em>not voted</em>}
-    </li>)
-  }
-  )}</ul>)
-}
-
-const VoteArea: FC<{ socket: Socket, room: Room, vote: Vote | undefined }> = (props) => {
-
-  const doVote = (score: string) => {
-    props.socket.emit('vote', { score, room: props.room.roomID });
-  }
-
-  return <div>
-    <div>
-      <em className='text-white'>{props.vote ? props.vote.score : 'You have not voted'}</em>
-    </div>
-    {scores.map((s, i) => {
-
-      const round = i == 0 ? 'rounded-l-md' : i == scores.length - 1 ? 'rounded-r-md' : '';
-      const color = props.vote?.score === s ? 'bg-ctp-blue' : 'bg-slate-600';
-      return <button key={s}
-        className={`${color} px-6 font-bold text-ctp-base p-2 ${round}`}
-        onClickCapture={() => doVote(s)}>{s[0].toUpperCase() + s.substring(1)}</button>
-
-    })}
-  </div>
-}
-
-const namedScores = ['coffee', 'unknown', 'infinite'];
-const scores = [...namedScores, ...[1, 2, 4, 8, 16].map(s => s + '')]
 
 
 export default App

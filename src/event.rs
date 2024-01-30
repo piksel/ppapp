@@ -1,39 +1,68 @@
-use std::borrow::Cow;
-use std::collections::HashMap;
-use socketioxide::socket::Sid;
-use uuid::Uuid;
+use serde::ser::SerializeTuple;
+use serde::Serializer;
+use crate::state::message::MessageDTO;
+use crate::state::room::RoomDTO;
+use crate::state::round::{CurrentRoundDTO, RoundDTO};
 use crate::state::user::UserDTO;
-use super::state::{message, user, User, vote, round};
+use crate::state::vote::VoteDTO;
 
-#[derive(Clone)]
-pub enum Event {
-    Message,
-    Messages,
-    Join,
-    UpdateUser,
-    Users,
-    UserUpdated,
-    Room,
-    Votes,
-    Rounds,
+pub enum ServerEvent<'a> {
+    Message(&'a MessageDTO),
+    Messages(&'a Vec<MessageDTO>),
+    Users(&'a Vec<UserDTO>),
+    User(&'a UserDTO),
+    UserUpdated(&'a UserDTO),
+    Room(&'a RoomDTO),
+    Votes(&'a Vec<VoteDTO>),
+    Vote(&'a VoteDTO),
+    Rounds(&'a Vec<RoundDTO>),
+    CurrentRound(&'a CurrentRoundDTO),
 }
 
-impl Into<Cow<'static, str>> for Event {
-    fn into(self) -> Cow<'static, str> {
-        Cow::from(match self {
-            Event::Message => "message",
-            Event::Messages => "messages",
-            Event::UpdateUser => "user",
-            Event::Users => "users",
-            Event::UserUpdated => "user_update",
-            Event::Join => "join",
-            Event::Room => "room",
-            Event::Votes => "votes",
-            Event::Rounds => "rounds",
-        })
+#[derive(Clone)]
+pub enum ClientEvent {
+    Join(String),
+    UpdateUser(UserDTO),
+    Vote(String),
+    Reveal(String),
+    NewRound(String),
+}
+
+impl<'a> serde::Serialize for ServerEvent<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        let mut tup = serializer.serialize_tuple(1).unwrap();
+        match self {
+            ServerEvent::Message(p) => tup.serialize_element(p),
+            ServerEvent::Messages(p) => tup.serialize_element(p),
+            ServerEvent::Users(p) => tup.serialize_element(p),
+            ServerEvent::UserUpdated(p) => tup.serialize_element(p),
+            ServerEvent::CurrentRound(p) => tup.serialize_element(p),
+            ServerEvent::Room(p) => tup.serialize_element(p),
+            ServerEvent::Votes(p) => tup.serialize_element(p),
+            ServerEvent::Rounds(p) => tup.serialize_element(p),
+            ServerEvent::User(p) => tup.serialize_element(p),
+            ServerEvent::Vote(p) => tup.serialize_element(p),
+        }?;
+        tup.end()
     }
 }
 
+impl<'a> ServerEvent<'a> {
+    pub fn event_id(&self) -> &'static str {
+        match self {
+            ServerEvent::Message(_) => "message",
+            ServerEvent::Messages(_) => "messages",
+            ServerEvent::Users(_) => "users",
+            ServerEvent::UserUpdated(_) => "user updated",
+            ServerEvent::CurrentRound(_) => "current round",
+            ServerEvent::Room(_) => "room",
+            ServerEvent::Votes(_) => "votes",
+            ServerEvent::Rounds(_) => "rounds",
+            ServerEvent::User(_) => "user",
+            ServerEvent::Vote(_) => "vote",
+        }
+    }
+}
 
 #[derive(Debug, serde::Deserialize)]
 pub struct MessageIn {
@@ -49,22 +78,22 @@ pub struct VoteIn {
 
 #[derive(serde::Serialize)]
 pub struct Messages {
-    pub messages: Vec<message::MessageDTO>,
+    pub messages: Vec<MessageDTO>,
 }
 
 #[derive(serde::Serialize)]
 pub struct Votes {
-    pub votes: Vec<vote::VoteDTO>,
+    pub votes: Vec<VoteDTO>,
 }
 
 #[derive(serde::Serialize)]
 pub struct Rounds {
-    pub rounds: Vec<round::RoundDTO>,
+    pub rounds: Vec<RoundDTO>,
 }
 
 #[derive(Debug, serde::Deserialize)]
 pub struct UserIn {
-    pub room: String,
+    pub email: String,
     pub name: String,
 }
 

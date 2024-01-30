@@ -11,6 +11,7 @@ export namespace types {
         "userID": string;
         "name": string;
         "email": string;
+        "avatar": string;
     };
     export type RoomDTO = {
         "roomID": string;
@@ -24,4 +25,15 @@ export namespace types {
         "name": string;
         "votes": (types.VoteDTO)[];
     };
+    export type CurrentRoundDTO = {
+        "name": string;
+        "flipped": boolean;
+    };
+    export type AckResult = ({
+        "type": "OK";
+    } | ({
+        "type": "Error";
+    } & {
+        "error": string;
+    }));
 }

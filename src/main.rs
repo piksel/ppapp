@@ -6,7 +6,9 @@ use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tracing::{info, Level};
-use tracing_subscriber::FmtSubscriber;
+use tracing_subscriber::{FmtSubscriber, Registry};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_tree::{HierarchicalLayer};
 
 mod event;
 mod handlers;
@@ -23,11 +25,14 @@ async fn handler(AxState(io): AxState<SocketIo>) {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing::subscriber::set_global_default(
-        FmtSubscriber::builder()
-            .with_max_level(Level::DEBUG)
-            .finish(),
-    )?;
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::DEBUG)
+        .with_env_filter("ppapp=debug,socketioxide=info,engineioxide=info")
+        .finish();
+    //     .with(HierarchicalLayer::new(2));
+
+    // let subscriber = Registry::default().with(HierarchicalLayer::new(2).with_ansi(true));
+    tracing::subscriber::set_global_default(subscriber)?;
 
     let (layer, io) = SocketIo::builder()
         .with_state(state::Users::default())
@@ -49,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .layer(layer),
         );
 
-    let port = 3000u16;
+    let port = 3010u16;
     let host = "0.0.0.0";
     info!(name: "starting", port, "Starting server");
 

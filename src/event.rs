@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+use std::fmt::{Display, Formatter};
 use serde::ser::SerializeTuple;
 use serde::Serializer;
 use crate::state::message::MessageDTO;
@@ -19,13 +21,48 @@ pub enum ServerEvent<'a> {
     CurrentRound(&'a CurrentRoundDTO),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum ClientEvent {
-    Join(String),
-    UpdateUser(UserDTO),
-    Vote(String),
-    Reveal(String),
-    NewRound(String),
+    Join,
+    // UpdateUser(UserDTO),
+    UpdateUser,
+    Vote,
+    Reveal,
+    NewRound,
+    CreateRoom,
+    EndVote,
+}
+
+impl ClientEvent {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ClientEvent::Join => "join",
+            ClientEvent::UpdateUser => "update user",
+            ClientEvent::Vote => "vote",
+            ClientEvent::Reveal => "reveal",
+            ClientEvent::NewRound => "new round",
+            ClientEvent::CreateRoom => "create room",
+            ClientEvent::EndVote => "end vote",
+        }
+    }
+}
+
+impl From<ClientEvent> for &'static str {
+    fn from(value: ClientEvent) -> Self {
+        value.as_str()
+    }
+}
+
+impl From<ClientEvent> for Cow<'static, str> {
+    fn from(value: ClientEvent) -> Self {
+        Cow::from(value.as_str())
+    }
+}
+
+impl Display for ClientEvent {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 impl<'a> serde::Serialize for ServerEvent<'a> {

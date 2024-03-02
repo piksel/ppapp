@@ -6,7 +6,12 @@ export const scoreMojis: Record<string, string> = {
     'coffee': '☕️',
     'unknown': '❓',
     'infinite': '♾️',
-    ...Object.fromEntries(numScores.map(s => [s, s])),
+    // ...Object.fromEntries(numScores.map(s => [s, s])),
     'picking': '🤔',
     'cardback': '🤫'
+}
+
+export const getScoreMoji = (candidate: string) => {
+    const known = scoreMojis[candidate];
+    return known ?? candidate;
 }

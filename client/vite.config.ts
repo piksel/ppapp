@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       // Proxying websockets or socket.io: ws://localhost:5173/socket.io -> ws://localhost:5174/socket.io
       '/socket.io': {
-        target: 'ws://localhost:3000',
+        target: 'ws://localhost:3010',
         ws: true,
       },
     },

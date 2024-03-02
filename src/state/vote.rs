@@ -1,7 +1,8 @@
-use std::fmt::{Display, Formatter, Octal};
+use std::fmt::{Display, Formatter, Octal, Pointer, Write, write};
 use std::num::ParseIntError;
 use std::str::FromStr;
 use ts_rs::TS;
+use crate::state::game::ParseError;
 
 #[derive(Clone, Debug)]
 pub enum Score {
@@ -9,17 +10,27 @@ pub enum Score {
     Coffee,
     Unknown,
     Number(u8),
+    StartIdea(String),
+    StopIdea(String),
+    ContinueIdea(String),
 }
 
 impl FromStr for Score {
-    type Err = ParseIntError;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "infinite" => Ok(Score::Infinite),
-            "coffee" => Ok(Score::Coffee),
-            "unknown" => Ok(Score::Unknown),
-            _ => s.parse::<u8>().map(|v| Score::Number(v))
+        if let Ok(n) = s.parse::<u8>() {
+            Ok(Score::Number(n))
+        } else {
+            match (s, s.split_once(": ")) {
+                ("infinite", _) => Ok(Score::Infinite),
+                ("coffee", _) => Ok(Score::Coffee),
+                ("unknown", _) => Ok(Score::Unknown),
+                (_, Some(("continue", m))) => Ok(Score::ContinueIdea(m.to_owned())),
+                (_, Some(("stop", m))) => Ok(Score::StopIdea(m.to_owned())),
+                (_, Some(("start", m))) => Ok(Score::StartIdea(m.to_owned())),
+                _ => Err(ParseError::UnknownVariant(s.to_owned())),
+            }
         }
     }
 }
@@ -31,6 +42,9 @@ impl Display for Score {
             Score::Coffee => f.write_str("coffee"),
             Score::Unknown => f.write_str("unknown"),
             Score::Number(n) => std::fmt::Display::fmt(n, f),
+            Score::ContinueIdea(s) => f.write_fmt(format_args!("continue: {s}")),
+            Score::StartIdea(s) => f.write_fmt(format_args!("start: {s}")),
+            Score::StopIdea(s) => f.write_fmt(format_args!("stop: {s}")),
         }
     }
 }

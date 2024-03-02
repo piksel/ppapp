@@ -1,4 +1,5 @@
 import * as types from './ppapi';
+import { RoundOpts } from './ppapi/RoundOpts';
 // export * from './ppapi'
 
 export type Message = Omit<types.MessageDTO, 'date'> & { date: Date };
@@ -33,8 +34,8 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
     ['vote']: (score: string, callback: (r: Result) => void) => void;
     ['join']: (roomId: string, callback: (r: Result) => void) => void;
-    ['create room']: (roomName: string, callback: (r: Result) => void) => void;
+    ['create room']: (roomName: string, game: string, callback: (r: Result) => void) => void;
     ['update user']: (user: User, callback: (r: Result) => void) => void;
     ['end vote']: (roomId: string, callback: (r: Result) => void) => void;
-    ['new round']: (roomId: string, callback: (r: Result) => void) => void;
+    ['new round']: (roomId: string, roundOpts: RoundOpts, callback: (r: Result) => void) => void;
 }

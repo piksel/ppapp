@@ -27,6 +27,19 @@ impl From<Round> for RoundDTO {
 pub struct CurrentRound {
     pub name: String,
     pub flipped: bool,
+    pub candidates: Vec<String>,
+    pub max_votes: u8,
+    pub anonymous: bool,
+    pub round_type: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, TS)]
+#[ts(export, export_to = "client/src/types/ppapi/")]
+pub struct RoundOpts {
+    pub candidates: Vec<String>,
+    pub max_votes: u8,
+    pub anonymous: bool,
+    pub round_type: String,
 }
 
 #[derive(serde::Serialize, Clone, Debug, TS)]
@@ -34,6 +47,10 @@ pub struct CurrentRound {
 pub struct CurrentRoundDTO {
     pub name: String,
     pub flipped: bool,
+    pub candidates: Vec<String>,
+    pub max_votes: u8,
+    pub anonymous: bool,
+    pub round_type: String,
 }
 
 impl From<CurrentRound> for CurrentRoundDTO {
@@ -41,15 +58,24 @@ impl From<CurrentRound> for CurrentRoundDTO {
         Self {
             name: value.name,
             flipped: value.flipped,
+            candidates: value.candidates,
+            max_votes: value.max_votes,
+            anonymous: value.anonymous,
+            round_type: value.round_type,
         }
     }
 }
 
 impl CurrentRound {
-    pub fn new(prior_rounds: usize) -> Self {
+    pub fn new(prior_rounds: usize, round_opts: RoundOpts) -> Self {
+        let RoundOpts { candidates, max_votes, anonymous, round_type } = round_opts;
         Self {
             flipped: false,
             name: format!("Round #{}", prior_rounds + 1),
+            candidates,
+            max_votes,
+            anonymous,
+            round_type,
         }
     }
 }

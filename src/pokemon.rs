@@ -4,10 +4,10 @@ use rand::prelude::*;
 static POKEDEX: &str = include_str!("../pokedex");
 
 lazy_static! {
-    static ref pokemon_list: Vec<&'static str> = POKEDEX.split('\n').collect();
+    static ref POKEMON_LIST: Vec<&'static str> = POKEDEX.split('\n').collect();
 }
 
 pub fn random_name() -> String {
-    pokemon_list.get(thread_rng().gen_range(0..pokemon_list.len()))
+    POKEMON_LIST.get(thread_rng().gen_range(0..POKEMON_LIST.len()))
         .expect("should not overflow").to_string()
 }

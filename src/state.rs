@@ -8,6 +8,7 @@ pub mod user;
 pub mod room;
 pub mod round;
 pub mod vote;
+pub mod game;
 
 pub use message::Message;
 pub use user::User;
@@ -64,7 +65,6 @@ impl RoomState {
         let mut binding = self.messages.write().await;
         let messages = binding.entry(room.to_owned()).or_default();
         messages.push(message);
-        // messages.truncate(20);
     }
 
     pub async fn get_rounds(&self, room: &str) -> Vec<Round> {
